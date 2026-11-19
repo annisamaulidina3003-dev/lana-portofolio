@@ -1,0 +1,16 @@
+import { sniffImageType, formatBytes, isStoragePath, validateImageFile } from '/home/claude/work/rizky-portfolio/src/lib/images.js';
+const b=(...a)=>Uint8Array.from(a); const s=(t)=>[...t].map(c=>c.charCodeAt(0));
+const t=(c,l)=>{console.log(c?'PASS':'FAIL',l); if(!c) process.exitCode=1;};
+t(sniffImageType(b(0xff,0xd8,0xff,0xe0))==='image/jpeg','jpeg');
+t(sniffImageType(b(0x89,...s('PNG'),0x0d,0x0a,0x1a,0x0a))==='image/png','png');
+t(sniffImageType(b(...s('RIFF'),0,0,0,0,...s('WEBP')))==='image/webp','webp');
+t(sniffImageType(b(0,0,0,0x1c,...s('ftypavif'),0,0,0,0))==='image/avif','avif');
+t(sniffImageType(b(0,0,0,0x18,...s('ftypmp42'),0,0,0,0))===null,'mp4 ditolak');
+t(sniffImageType(b(...s('<svg xmlns')))===null,'svg ditolak');
+t(sniffImageType(b(...s('GIF89a')))===null,'gif ditolak');
+t(isStoragePath('projects/a.jpg')&&!isStoragePath('https://x/y.png')&&!isStoragePath('//x/y')&&!isStoragePath('/images/a.png')&&!isStoragePath(''),'isStoragePath');
+t(formatBytes(5*1024*1024)==='5.00 MB','formatBytes');
+const avif=new File([b(0,0,0,0x1c,...s('ftypavif'),0,0,0,0)],'a.avif',{type:'image/avif'});
+t((await validateImageFile(avif,{decode:false})).ok,'validateImageFile avif ok');
+t(!(await validateImageFile(new File([b(0xff,0xd8,0xff)],'a.png',{type:'image/png'}),{decode:false})).ok,'mime≠isi ditolak');
+t(!(await validateImageFile(new File([new Uint8Array(5*1024*1024+1)],'a.jpg',{type:'image/jpeg'}),{decode:false})).ok,'>5MB ditolak');
